@@ -6,9 +6,6 @@ from discord.ext import commands
 with open('token.txt', 'r') as f:
     token = f.read()
 
-# getting cogs
-initial_extensions = []
-
 
 # initiating bot
 class Bot(commands.Bot):
@@ -22,6 +19,15 @@ class Bot(commands.Bot):
 
 # creating bot object
 bot = Bot()
+
+# getting cogs and loading cogs
+initial_extensions = ['cogs.profile']
+if __name__ == '__main__':
+    for extension in initial_extensions:
+        try:
+            bot.load_extension(extension)
+        except Exception as e:
+            print(f'Failed to load extension {extension}., {e}')
 
 # running bot
 bot.run(token)
