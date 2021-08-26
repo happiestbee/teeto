@@ -19,6 +19,27 @@ async def summoner(ctx, username):
     return user.profile_icon.url
 
 
+# get champion data and make embed
+async def champion(ctx, champion: cass.Champion):
+    icon = champion.image.url
+    classes = ", ".join(champion.tags)
+    tips = champion.ally_tips
+    title = champion.title
+    lore = champion.lore
+    play_rates = champion.play_rates
+    for role in play_rates:
+        print(play_rates[role])
+    e = discord.Embed(
+        title=champion.name.title(),
+        colour=discord.Colour.gold(),
+        description=title
+    )
+    e.set_thumbnail(url=icon)
+    e.add_field(name="Classes:", value=classes)
+    e.add_field(name="Lore:", value=lore, inline=False)
+    return e
+
+
 # profile cog
 class Profile(commands.Cog):
     def __init__(self, bot):
@@ -41,8 +62,8 @@ class Profile(commands.Cog):
         lp = json_data["leaguePoints"]
         wins = json_data["wins"]
         losses = json_data["losses"]
-        return tier, rank, lp, wins, losses
-'''
+        return tier, rank, lp, wins, losses'''
+
     # create profile command
     @commands.command(help='Find the profile of a given player or your linked account',
                       aliases=['p'])
@@ -70,6 +91,26 @@ class Profile(commands.Cog):
         profile_embed.add_field(name="Rank:", value=f"{tier} {rank}, LP: {lp}")
         profile_embed.add_field(name="Win/Loss:", value=f"W: {wins}, L: {losses}, WR: {wr}%", inline=False)
         await ctx.send(embed=profile_embed)'''
+
+    # create champion command
+    @commands.command(help="Get brief info .about a champion")
+    async def champion(self, ctx, *, champion_name=None):
+        # check if user provided a champio name
+        if champion_name is None:
+            await ctx.send("Please provide a champion name")
+            return
+        # convert champion name to correct format for search
+        champion_name = champion_name.lower().title()
+        try:
+            champ = cass.get_champion(champion_name)
+            e = await champion(ctx, champ)
+            await ctx.send(embed=e)
+        # check if champion exists
+        except Exception as e:
+            if str(e) == champion_name:
+                await ctx.send("Champion not found")
+            else:
+                raise
 
 
 # add cog
