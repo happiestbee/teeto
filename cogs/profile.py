@@ -51,7 +51,7 @@ class Profile(commands.Cog):
         # check if username is linked if none provided
         if username is None:
             try:
-                user = self.users[ctx.author.id]
+                self.users[ctx.author.id]
             except KeyError:
                 await ctx.send("You do not have an account linked")
                 return
@@ -70,6 +70,7 @@ class Profile(commands.Cog):
         profile_embed.add_field(name="Rank:", value=f"{tier} {rank}, LP: {lp}")
         profile_embed.add_field(name="Win/Loss:", value=f"W: {wins}, L: {losses}, WR: {wr}%", inline=False)
         await ctx.send(embed=profile_embed)'''
+
 
 # add cog
 def setup(bot):

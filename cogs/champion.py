@@ -31,7 +31,29 @@ async def champion(champion_query: cass.Champion):
     return e
 
 
-# profile cog
+# create champion view for buttons
+class ChampionView(discord.ui.View):
+    def __init__(self, message):
+        super().__init__()
+
+        # get message to edit
+        self.message = message
+
+    # instantiate overview button
+    @discord.ui.button(label="Overview",
+                       style=discord.ButtonStyle.green,
+                       disabled=False,
+                       emoji='❔')
+    async def overview(self, button: discord.ui.Button, interaction: discord.Interaction):
+        # test to disable function
+        button.disabled = True
+        button.style = discord.ButtonStyle.gray
+
+        # update message
+        await self.message.edit(view=self)
+
+
+# champion cog
 class Champion(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -46,9 +68,14 @@ class Champion(commands.Cog):
         # convert champion name to correct format for search
         champion_name = champion_name.lower().title()
         try:
+            # create initial embed and message
             champ = cass.get_champion(champion_name)
             e = await champion(champ)
-            await ctx.send(embed=e)
+            msg = await ctx.send(embed=e)
+
+            # create view for message with buttons
+            view = ChampionView(msg)
+            await msg.edit(embed=e, view=view)
         # check if champion exists
         except Exception as e:
             if str(e) == champion_name:
