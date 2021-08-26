@@ -21,7 +21,7 @@ class Bot(commands.Bot):
 bot = Bot()
 
 # getting cogs and loading cogs
-initial_extensions = ['cogs.profile']
+initial_extensions = ['cogs.profile', 'cogs.champion']
 if __name__ == '__main__':
     for extension in initial_extensions:
         try:
