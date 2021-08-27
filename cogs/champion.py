@@ -183,8 +183,16 @@ class ChampionView(discord.ui.View):
                        emoji='🎀')
     async def skins(self, button: discord.ui.Button, interaction: discord.Interaction):
         for buttons in self.children:
-            buttons.disabled = False
-            buttons.style = discord.ButtonStyle.green
+            if buttons != button:
+                buttons.disabled = False
+                buttons.style = discord.ButtonStyle.green
+        button.disabled = True
+        button.style = discord.ButtonStyle.gray
+
+        # clear embed message
+        self.embed.clear_fields()
+        self.embed.add_field(name="Check the new message to view skins", value="Use the dropdown to select the skin you want to see")
+
         skins = await get_skins(self.champ)
 
         # create embed message for skins
@@ -198,7 +206,7 @@ class ChampionView(discord.ui.View):
         await msg.edit(view=view)
 
         # update message
-        await self.message.edit(view=self)
+        await self.message.edit(embed=self.embed, view=self)
 
 
 # champion cog
