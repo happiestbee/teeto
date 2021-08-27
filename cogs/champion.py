@@ -18,8 +18,15 @@ async def champion(champion_query: cass.Champion):
     title = champion_query.title
     lore = champion_query.lore
     play_rates = champion_query.play_rates
+    best_role = ""
+    highest = 0
     for role in play_rates:
-        print(play_rates[role])
+        if play_rates[role] > highest:
+            highest = play_rates[role]
+            best_role = role.name
+    best_role = best_role.capitalize()
+    if best_role == "Utility":
+        best_role = "Support"
     e = discord.Embed(
         title=champion_query.name.title(),
         colour=discord.Colour.gold(),
@@ -27,27 +34,146 @@ async def champion(champion_query: cass.Champion):
     )
     e.set_thumbnail(url=icon)
     e.add_field(name="Classes:", value=classes)
+    e.add_field(name="Role:", value=best_role)
     e.add_field(name="Lore:", value=lore, inline=False)
     return e
 
 
+# get stat information
+async def get_stats(champion_query: cass.Champion):
+    pass
+
+
+# get skins information
+async def get_skins(champion_query: cass.Champion):
+    skins = {}
+    for skin in champion_query.skins:
+        skins[skin.name] = skin.splash_url
+    return skins
+
+
+# create skins select for easy viewing
+class SkinSelect(discord.ui.Select):
+    def __init__(self, skins, msg):
+        self.skins = skins
+        self.msg = msg
+
+        # create select options
+        options = []
+        for name, url in self.skins.items():
+            options.append(discord.SelectOption(label=name))
+
+        super().__init__(placeholder="Select a skin...", options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        # get name and url and make new embed
+        name = interaction.data['values'][0]
+        url = self.skins[interaction.data['values'][0]]
+        new_embed = discord.Embed(
+            title=name,
+            colour=discord.Colour.blurple()
+        )
+        new_embed.set_image(url=url)
+        await self.msg.edit(embed=new_embed)
+
+
+# create view for skin select
+class SkinView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+
+
 # create champion view for buttons
 class ChampionView(discord.ui.View):
-    def __init__(self, message):
+    def __init__(self, ctx, message, champ):
         super().__init__()
 
         # get message to edit
         self.message = message
 
-    # instantiate overview button
+        self.champ = champ
+        self.ctx = ctx
+
+    # instantiate buttons
     @discord.ui.button(label="Overview",
                        style=discord.ButtonStyle.green,
                        disabled=False,
                        emoji='❔')
     async def overview(self, button: discord.ui.Button, interaction: discord.Interaction):
-        # test to disable function
+        for buttons in self.children:
+            if buttons != button:
+                buttons.disabled = False
+                buttons.style = discord.ButtonStyle.green
         button.disabled = True
         button.style = discord.ButtonStyle.gray
+
+        # update message
+        await self.message.edit(view=self)
+
+    @discord.ui.button(label="Stats",
+                       style=discord.ButtonStyle.green,
+                       disabled=False,
+                       emoji='📊')
+    async def stats(self, button: discord.ui.Button, interaction: discord.Interaction):
+        for buttons in self.children:
+            if buttons != button:
+                buttons.disabled = False
+                buttons.style = discord.ButtonStyle.green
+        button.disabled = True
+        button.style = discord.ButtonStyle.gray
+
+        # update message
+        await self.message.edit(view=self)
+
+    @discord.ui.button(label="Items",
+                       style=discord.ButtonStyle.green,
+                       disabled=False,
+                       emoji='🛒')
+    async def items(self, button: discord.ui.Button, interaction: discord.Interaction):
+        for buttons in self.children:
+            if buttons != button:
+                buttons.disabled = False
+                buttons.style = discord.ButtonStyle.green
+        button.disabled = True
+        button.style = discord.ButtonStyle.gray
+
+        # update message
+        await self.message.edit(view=self)
+
+    @discord.ui.button(label="Abilities",
+                       style=discord.ButtonStyle.green,
+                       disabled=False,
+                       emoji='⚔️')
+    async def abilities(self, button: discord.ui.Button, interaction: discord.Interaction):
+        for buttons in self.children:
+            if buttons != button:
+                buttons.disabled = False
+                buttons.style = discord.ButtonStyle.green
+        button.disabled = True
+        button.style = discord.ButtonStyle.gray
+
+        # update message
+        await self.message.edit(view=self)
+
+    @discord.ui.button(label="Skins",
+                       style=discord.ButtonStyle.green,
+                       disabled=False,
+                       emoji='🎀')
+    async def skins(self, button: discord.ui.Button, interaction: discord.Interaction):
+        for buttons in self.children:
+            buttons.disabled = False
+            buttons.style = discord.ButtonStyle.green
+        skins = await get_skins(self.champ)
+
+        # create embed message for skins
+        skin_embed = discord.Embed(
+            title="Select a skin to start",
+            colour=discord.Colour.blurple()
+        )
+        view = SkinView()
+        msg = await self.ctx.send(embed=skin_embed, view=view)
+        view.add_item(SkinSelect(skins, msg))
+        await msg.edit(view=view)
 
         # update message
         await self.message.edit(view=self)
@@ -74,7 +200,7 @@ class Champion(commands.Cog):
             msg = await ctx.send(embed=e)
 
             # create view for message with buttons
-            view = ChampionView(msg)
+            view = ChampionView(ctx, msg, champ)
             await msg.edit(embed=e, view=view)
         # check if champion exists
         except Exception as e:
